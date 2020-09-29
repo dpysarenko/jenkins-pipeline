@@ -45,7 +45,7 @@ pipeline {
         stage("bake image with packer") {
             steps {
                 script {
-                    sh "packer build  -var \'path=${PASS}\' -var \'account_file=key.json\' -var \'commit_id=${GIT_COMMIT}\' petclinic.json"
+                    sh "packer build  -var \'path=${PASS}\' -var \'account_file=key.json\' -var \'commit_id=${PETCLINIC_COMMIT}\' petclinic.json"
                 }
             }
         }
