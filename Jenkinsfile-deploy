@@ -87,17 +87,17 @@ pipeline {
         stage("get git commit id") {
         steps {
             script {
-            env.GIT_COMMIT = sh(
+            env.PETCLINIC_COMMIT = sh(
                 returnStdout: true,
                 script: 'git log --pretty="%h" -1'
                 ).trim();
-            sh("echo ${GIT_COMMIT}");
+            sh("echo ${PETCLINIC_COMMIT}");
             }
         }
     }
         stage("downstream") {
           steps {
-            build(job: 'build petclinic image', parameters: [[$class: 'StringParameterValue', name: "GIT_COMMIT", value: "${GIT_COMMIT}"]])
+            build(job: 'build petclinic image', parameters: [[$class: 'StringParameterValue', name: "PETCLINIC_COMMIT", value: "${PETCLINIC_COMMIT}"]])
           }
         }
     }
