@@ -1,0 +1,40 @@
+pipeline {
+    agent {
+        label "master"
+    }
+    options {
+        ansiColor('xterm')
+    }
+    stages {
+        stage("clone code") {
+                steps {
+                    script {
+                        git credentialsId: "GH_private_key",
+                        branch: "master",
+                        url: "git@github.com:dpysarenko/terraform.git";
+                            }
+                    }
+            }
+        stage("get key") {
+          steps {
+            script {
+               sh  "gcloud secrets versions access latest --secret='gcp-json' > key.json"
+                 }
+          }     
+        }    
+        stage("terraform apply") {
+            steps {
+                script {
+                    sh "terraform init"
+                    sh "terraform plan"
+                    sh "terraform apply -auto-approve"
+                }
+            }
+        }    
+    }    
+    post {
+      cleanup {
+        cleanWs()
+      }
+    }    
+}

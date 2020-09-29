@@ -1,0 +1,63 @@
+pipeline {
+    agent {
+        label "master"
+    }
+    options {
+        ansiColor('xterm')
+    }
+    environment {
+        PASS = credentials('vault')
+    }
+    stages {
+       stage("get vars") {
+          steps {
+            script {
+              env.NEXUS_IP = sh (
+            script: 'gcloud secrets versions access latest  --secret=\"nexus-ip\"',
+            returnStdout: true
+        ).trim()
+            }
+          }
+        }
+        stage("clone code") {
+                steps {
+                    script {
+                        git credentialsId: "GH_private_key",
+                        branch: "master",
+                        url: "git@github.com:dpysarenko/packer.git";
+                            }
+                    }
+            }
+        stage("get key") {
+          steps {
+            script {
+               sh  "gcloud secrets versions access latest --secret='gcp-json' > key.json"
+                 }
+          }     
+        }
+        stage("add nexus ip") {
+            steps {
+                script {
+                    sh 'echo "nexus_url : ${NEXUS_IP}" >> roles/pet_role/vars/main.yml'
+                }
+            }   
+        }      
+        stage("bake image with packer") {
+            steps {
+                script {
+                    sh "packer build  -var \'path=${PASS}\' -var \'account_file=key.json\' -var \'commit_id=${GIT_COMMIT}\' petclinic.json"
+                }
+            }
+        }
+        stage("downstream") {
+          steps {
+            build(job: 'terraform infratstructure')
+          }
+        }
+    }
+    post {
+      cleanup {
+        cleanWs()
+      }
+    }    
+}
